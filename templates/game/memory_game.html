@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block style %}
+    <style>
+        /* CSS styles for card class */
+        .card {
+            width: 100px;
+            height: 100px;
+            background-color: lightgray;
+            margin: 10px;
+            display: inline-block;
+            text-align: center;
+            line-height: 100px;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        /* Additional CSS styles for game elements */
+        .game-info {
+            margin-top: 20px;
+        }
+
+        .game-button {
+            margin-top: 10px;
+        }
+    </style>
+{% endblock %}
+{% load static %}
+{% block index %}
+{% endblock %}
+
+{% block content %}
+    <h1 style="margin-left: 20%;">Memory Game</h1>
+    <p style="margin-left: 20%;">Welcome, player</p>
+    <div id="game-board" style="margin-left: 20%;">
+        {% for card in cards %}
+            <div class="card" data-value="{{ card }}" onclick="revealCard(this)"></div>
+        {% endfor %}
+    </div>
+    <div class="game-info" style="margin-left: 20%;">
+        <p>Time Elapsed: <span id="timeElapsed">0</span> seconds</p>
+        <p>Progress: <span id="progress">0</span>%</p>
+        <p>Score: <span id="score">0</span></p>
+    </div>
+    <!-- <button class="game-button" onclick="saveGameData()">Save Game Data</button> -->
+
+    <script>
+        // JavaScript logic for the game
+        let selectedCards = [];
+        let matchedPairs = 0;
+        let startTime = new Date();
+        let score = 0;
+
+        function revealCard(card) {
+            if (selectedCards.length < 2 && !selectedCards.includes(card)) {
+                selectedCards.push(card);
+                card.innerText = card.dataset.value;
+                if (selectedCards.length === 2) {
+                    setTimeout(checkMatch, 1000);
+                }
+            }
+        }
+
+        function checkMatch() {
+            if (selectedCards[0].dataset.value === selectedCards[1].dataset.value) {
+                selectedCards[0].style.backgroundColor = 'green';
+                selectedCards[1].style.backgroundColor = 'green';
+                matchedPairs++;
+                score += 10; // Increase score for each matched pair
+                document.getElementById('score').innerText = score;
+                if (matchedPairs === {{ cards|length }}/2) {
+                    let endTime = new Date();
+                    let elapsedTime = (endTime - startTime) / 1000; // Time in seconds
+                    let finalScore = score * ({{ cards|length }} / 2) / elapsedTime; // Calculate final score
+                    alert("Congratulations! You've matched all pairs!\nTime taken: " + elapsedTime + " seconds\nFinal Score: " + finalScore.toFixed(2));
+                    suggestLearningResources(finalScore, elapsedTime);
+                    saveRecommendation(finalScore, elapsedTime);
+                }
+            } else {
+                selectedCards[0].innerText = '';
+                selectedCards[1].innerText = '';
+            }
+            selectedCards = [];
+
+            // Update progress
+            let progress = (matchedPairs / ({{ cards|length }}/2)) * 100;
+            document.getElementById('progress').innerText = progress.toFixed(2);
+        }
+
+        // Update time elapsed every second
+        setInterval(updateTimeElapsed, 1000);
+
+        function updateTimeElapsed() {
+            let currentTime = new Date();
+            let elapsedTime = (currentTime - startTime) / 1000; // Time in seconds
+            document.getElementById('timeElapsed').innerText = elapsedTime.toFixed(0);
+        }
+
+        function saveGameData() {
+            let timeElapsed = document.getElementById('timeElapsed').innerText;
+            let progress = document.getElementById('progress').innerText;
+            let score = document.getElementById('score').innerText;
+
+            let gameData = {
+                timeElapsed: timeElapsed,
+                progress: progress,
+                score: score
+            };
+
+            // Convert the JSON object to a data URL
+            let dataURL = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(gameData));
+
+            // Create a temporary anchor element to trigger the download
+            let anchor = document.createElement('a');
+            anchor.href = dataURL;
+            anchor.download = 'game_data.json';
+            anchor.click();
+        }
+
+        function suggestLearningResources(finalScore, elapsedTime) {
+        let suggestions = [];
+
+        if (finalScore > 50 && elapsedTime < 60) {
+            // Advanced memory techniques
+            suggestions.push("Advanced memory techniques");
+            suggestions.push("Cognitive psychology courses");
+            suggestions.push("Neuroscience of memory courses");
+        } else if (finalScore > 30 && elapsedTime < 120) {
+            // Memory improvement practice materials
+            suggestions.push("Memory improvement exercises and games");
+            suggestions.push("Effective study strategies courses");
+            suggestions.push("Memory improvement workshops");
+        } else {
+            // Basic memory improvement resources
+            suggestions.push("Introduction to memory techniques");
+            suggestions.push("Effective note-taking strategies");
+            suggestions.push("Memory improvement books");
+        }
+
+        // Display suggestions to the user
+        alert("Based on your performance, here are some suggested skills and college courses:\n\n" + suggestions.join("\n"));
+    }
+
+
+        function saveRecommendation(finalScore, elapsedTime) {
+            let recommendation = "";
+
+            if (finalScore > 50 && elapsedTime < 60) {
+                recommendation = "Student Understands Logic Reasoning";
+            } else if (finalScore > 30 && elapsedTime < 120) {
+                recommendation = "Student Understand Reasoning";
+            } else {
+                recommendation = "Student Understands Theory";
+            }
+
+            // Create a JSON object with the recommendation
+            let recommendationData = {
+                recommendation: recommendation
+            };
+
+            // Convert the JSON object to a data URL
+            let dataURL = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(recommendationData));
+
+            // Create a temporary anchor element to trigger the download
+            let anchor = document.createElement('a');
+            anchor.href = dataURL;
+            anchor.download = 'recommendation.json';
+            anchor.click();
+        }
+    </script>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
+
+{% block script %}
+
+{% endblock %}
